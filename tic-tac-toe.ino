@@ -60,10 +60,10 @@ void setup() {
   // Display the tic-tac-toe grid. We draw multiple lines to
   // display thicker lines
   for (int i = -1; i <= 1; i++) {
-    tft.drawLine(80 + i, 40 + i, 80 + i, 280 + i, ILI9341_BLACK);
-    tft.drawLine(160 + i, 40 + i, 160 + i, 280 + i, ILI9341_BLACK);
-    tft.drawLine(0 + i, 120 + i, 240 + i, 120 + i, ILI9341_BLACK);
-    tft.drawLine(0 + i, 200 + i, 240 + i, 200 + i, ILI9341_BLACK);
+    tft.drawLine(80 + i, 40, 80 + i, 280, ILI9341_BLACK);
+    tft.drawLine(160 + i, 40, 160 + i, 280, ILI9341_BLACK);
+    tft.drawLine(0, 120 + i, 240, 120 + i, ILI9341_BLACK);
+    tft.drawLine(0, 200 + i, 240, 200 + i, ILI9341_BLACK);
   }
 
   drawO(0, 0, ILI9341_BLACK);
