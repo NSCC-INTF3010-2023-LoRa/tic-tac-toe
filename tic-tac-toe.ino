@@ -1,16 +1,24 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
+#include <Adafruit_STMPE610.h>
 
-#define TFT_CS 4   /* shield pin 10 */
-#define TFT_DC 3   /* shield pin 9  */
-#define TFT_SCK 7  /* shield pin 13 */
-#define TFT_MISO 6 /* shield pin 12 */
-#define TFT_MOSI 5 /* shield pin 11 */
+#define TFT_CS 4 /* shield pin 10 */
+#define TFT_DC 3 /* shield pin 9  */
+#define SCK    7 /* shield pin 13 */
+#define MISO   6 /* shield pin 12 */
+#define MOSI   5 /* shield pin 11 */
+#define TS_CS  8 /* shield pin 8  */
 // -1 for the reset pin, which we don't use
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, -1, TFT_MISO);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, MOSI, SCK, -1, MISO);
+Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 
 // Determines the length of lines that draw X's
 #define X_OFFSET 23
+
+#define TS_MINX 150
+#define TS_MINY 130
+#define TS_MAXX 3800
+#define TS_MAXY 4000
 
 uint16_t gridToPixelX(uint8_t coord) {
   return 40 + coord * 80;
@@ -51,6 +59,7 @@ void drawX(uint8_t x, uint8_t y, uint16_t color) {
 }
 
 void setup() {
+  Serial.begin(9600);
   tft.begin();
   tft.fillScreen(ILI9341_WHITE);
   tft.setTextColor(ILI9341_BLUE, ILI9341_BLACK);
@@ -66,9 +75,23 @@ void setup() {
     tft.drawLine(0, 200 + i, 240, 200 + i, ILI9341_BLACK);
   }
 
-  drawO(0, 0, ILI9341_BLACK);
-  drawX(2, 0, ILI9341_BLACK);
+  while (!Serial);
+  if (!ts.begin()) {
+    Serial.println("Failed to start touchscreen");
+    while (true) delay(1000);
+  }
 }
 
 void loop() {
+  if (ts.bufferEmpty()) return;
+
+  TS_Point point = ts.getPoint();
+  point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
+  point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
+
+  Serial.print("(");
+  Serial.print(point.x);
+  Serial.print(", ");
+  Serial.print(point.y);
+  Serial.println(")");
 }
