@@ -28,6 +28,19 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 #define GRID_CELL_WIDTH ((GRID_END_X - GRID_START_X) / 3)
 #define GRID_CELL_CENTER_OFFSET (GRID_CELL_WIDTH / 2)
 
+#define TURN_X 0
+#define TURN_O 1
+uint8_t turn = TURN_X;
+
+#define CELL_UNKNOWN 0
+#define CELL_X 1
+#define CELL_O 2
+uint8_t grid[3][3] = {
+  {CELL_UNKNOWN, CELL_UNKNOWN, CELL_UNKNOWN},
+  {CELL_UNKNOWN, CELL_UNKNOWN, CELL_UNKNOWN},
+  {CELL_UNKNOWN, CELL_UNKNOWN, CELL_UNKNOWN}
+};
+
 uint16_t gridToPixelX(uint8_t coord) {
   return GRID_CELL_CENTER_OFFSET + coord * GRID_CELL_WIDTH;
 }
@@ -80,11 +93,51 @@ void drawX(uint8_t x, uint8_t y, uint16_t color) {
   tft.drawLine(x - X_OFFSET + 1, y + X_OFFSET + 1, x + X_OFFSET + 1, y - X_OFFSET + 1, color);
 }
 
+void triggerVictory(uint8_t side) {
+  tft.setCursor(0, 0);
+  tft.write(side == CELL_X ? "X" : "O");
+  tft.write(" wins!");
+}
+
+void processTurn(uint8_t x, uint8_t y) {
+  if (grid[x][y] != CELL_UNKNOWN) return;
+
+  if (turn == TURN_X) {
+    grid[x][y] = CELL_X;
+    drawX(x, y, ILI9341_BLACK);
+    turn = TURN_O;
+  } else {
+    grid[x][y] = CELL_O;
+    drawO(x, y, ILI9341_BLACK);
+    turn = TURN_X;
+  }
+
+  // Check for victory
+  if (grid[0][y] == grid[1][y] && grid[1][y] == grid[2][y]) {
+    return triggerVictory(grid[x][y]);
+  }
+  if (grid[x][0] == grid[x][1] && grid[x][1] == grid[x][2]) {
+    return triggerVictory(grid[x][y]);
+  }
+  if (x == y) { // We're on the off diagonal
+    if (grid[0][0] == grid[1][1] && grid[1][1] == grid[2][2]) {
+      return triggerVictory(grid[x][y]);
+    }
+  }
+  if (x + y == 2) { // We're on the main diagonal
+    if (grid[0][2] == grid[1][1] && grid[1][1] == grid[2][0]) {
+      return triggerVictory(grid[x][y]);
+    }
+  }
+
+  // FIXME: check for stalemates
+}
+
 void setup() {
   Serial.begin(9600);
   tft.begin();
   tft.fillScreen(ILI9341_WHITE);
-  tft.setTextColor(ILI9341_BLUE, ILI9341_BLACK);
+  tft.setTextColor(ILI9341_BLUE, ILI9341_WHITE);
   tft.setTextSize(2);
   tft.setTextWrap(false);
 
@@ -96,9 +149,6 @@ void setup() {
     tft.drawLine(0, 120 + i, 240, 120 + i, ILI9341_BLACK);
     tft.drawLine(0, 200 + i, 240, 200 + i, ILI9341_BLACK);
   }
-
-  drawO(0, 0, ILI9341_BLACK);
-  drawX(2, 1, ILI9341_BLACK);
 
   while (!Serial);
   if (!ts.begin()) {
@@ -119,5 +169,6 @@ void loop() {
   uint8_t y = pixelToGridY(point.y);
   if (y == -1) return;
 
-  drawX(x, y, ILI9341_BLACK);
+  // drawX(x, y, ILI9341_BLACK);
+  processTurn(x, y);
 }
