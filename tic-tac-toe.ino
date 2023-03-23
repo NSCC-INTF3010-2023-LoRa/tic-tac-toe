@@ -114,22 +114,10 @@ void loop() {
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
-  Serial.print("Pixel: (");
-  Serial.print(point.x);
-  Serial.print(", ");
-  Serial.print(point.y);
-  Serial.println(")");
-
   uint8_t x = pixelToGridX(point.x);
   if (x == -1) return;
   uint8_t y = pixelToGridY(point.y);
   if (y == -1) return;
-
-  Serial.print("Grid: (");
-  Serial.print(x);
-  Serial.print(", ");
-  Serial.print(y);
-  Serial.println(")");
 
   drawX(x, y, ILI9341_BLACK);
 }
