@@ -102,32 +102,32 @@ void processTurn(uint8_t x, uint8_t y) {
   if (player == SIDE_X) {
     grid[x][y] = SIDE_X;
     drawX(x, y, ILI9341_BLACK);
-    player = SIDE_O;
   } else {
     grid[x][y] = SIDE_O;
     drawO(x, y, ILI9341_BLACK);
-    player = SIDE_X;
   }
 
   // Check for victory
   if (grid[0][y] == grid[1][y] && grid[1][y] == grid[2][y]) {
-    return triggerVictory(grid[x][y]);
+    return triggerVictory(player);
   }
   if (grid[x][0] == grid[x][1] && grid[x][1] == grid[x][2]) {
-    return triggerVictory(grid[x][y]);
+    return triggerVictory(player);
   }
   if (x == y) { // We're on the off diagonal
     if (grid[0][0] == grid[1][1] && grid[1][1] == grid[2][2]) {
-      return triggerVictory(grid[x][y]);
+      return triggerVictory(player);
     }
   }
   if (x + y == 2) { // We're on the main diagonal
     if (grid[0][2] == grid[1][1] && grid[1][1] == grid[2][0]) {
-      return triggerVictory(grid[x][y]);
+      return triggerVictory(player);
     }
   }
 
   // FIXME: check for stalemates
+
+  player = player == SIDE_X ? SIDE_O : SIDE_X;
 }
 
 void setup() {
