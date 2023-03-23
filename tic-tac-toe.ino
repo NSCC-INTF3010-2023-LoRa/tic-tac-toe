@@ -12,12 +12,19 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, -1, T
 // Determines the length of lines that draw X's
 #define X_OFFSET 23
 
+uint16_t gridToPixelX(uint8_t coord) {
+  return 40 + coord * 80;
+}
+
+uint16_t gridToPixelY(uint8_t coord) {
+  return 240 - coord * 80;
+}
+
 /* x and y should be numbers between 0 and 2 inclusive.
  * (0, 0) represents the bottom-left corner of the grid */
 void drawO(uint8_t x, uint8_t y, uint16_t color) {
-  // Convert grid coords to pixel coords
-  x = 40 + x * 80;
-  y = 240 - y * 80;
+  x = gridToPixelX(x);
+  y = gridToPixelY(y);
 
   for (int r = 30; r <= 32; r++) {
     tft.drawCircle(x, y, r, color);
@@ -25,8 +32,8 @@ void drawO(uint8_t x, uint8_t y, uint16_t color) {
 }
 
 void drawX(uint8_t x, uint8_t y, uint16_t color) {
-  x = 40 + x * 80;
-  y = 240 - y * 80;
+  x = gridToPixelX(x);
+  y = gridToPixelY(y);
 
   // Main diagonal - NW to SE
   tft.drawLine(x - X_OFFSET - 1, y - X_OFFSET + 1, x + X_OFFSET - 1, y + X_OFFSET + 1, color);
