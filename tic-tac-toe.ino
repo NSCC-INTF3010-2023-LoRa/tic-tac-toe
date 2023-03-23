@@ -38,6 +38,8 @@ uint8_t grid[3][3] = {
   {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN}
 };
 
+uint8_t turn = 1;
+
 uint16_t gridToPixelX(uint8_t coord) {
   return GRID_CELL_CENTER_OFFSET + coord * GRID_CELL_WIDTH;
 }
@@ -96,7 +98,13 @@ void triggerVictory(uint8_t side) {
   tft.write(" wins!");
 }
 
+void triggerStalemate() {
+  tft.setCursor(0, 0);
+  tft.write("Stalemate");
+}
+
 void processTurn(uint8_t x, uint8_t y) {
+  // Do nothing if the user taps a non-empty square
   if (grid[x][y] != SIDE_UNKNOWN) return;
 
   if (player == SIDE_X) {
@@ -125,9 +133,12 @@ void processTurn(uint8_t x, uint8_t y) {
     }
   }
 
-  // FIXME: check for stalemates
+  if (turn == 9) {
+    return triggerStalemate();
+  }
 
   player = player == SIDE_X ? SIDE_O : SIDE_X;
+  turn++;
 }
 
 void setup() {
