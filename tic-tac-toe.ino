@@ -9,6 +9,9 @@
 // -1 for the reset pin, which we don't use
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, -1, TFT_MISO);
 
+// Determines the length of lines that draw X's
+#define X_OFFSET 23
+
 /* x and y should be numbers between 0 and 2 inclusive.
  * (0, 0) represents the bottom-left corner of the grid */
 void drawO(uint8_t x, uint8_t y, uint16_t color) {
@@ -25,17 +28,19 @@ void drawX(uint8_t x, uint8_t y, uint16_t color) {
   x = 40 + x * 80;
   y = 240 - y * 80;
 
-  tft.drawLine(x - 23 - 1, y - 23 + 1, x + 23 - 1, y + 23 + 1, color);
-  tft.drawLine(x - 23, y - 23 + 1, x + 23, y + 23 + 1, color);
-  tft.drawLine(x - 23, y - 23, x + 23, y + 23, color);
-  tft.drawLine(x - 23 + 1, y - 23, x + 23 + 1, y + 23, color);
-  tft.drawLine(x - 23 + 1, y - 23 - 1, x + 23 + 1, y + 23 - 1, color);
+  // Main diagonal - NW to SE
+  tft.drawLine(x - X_OFFSET - 1, y - X_OFFSET + 1, x + X_OFFSET - 1, y + X_OFFSET + 1, color);
+  tft.drawLine(x - X_OFFSET, y - X_OFFSET + 1, x + X_OFFSET, y + X_OFFSET + 1, color);
+  tft.drawLine(x - X_OFFSET, y - X_OFFSET, x + X_OFFSET, y + X_OFFSET, color);
+  tft.drawLine(x - X_OFFSET + 1, y - X_OFFSET, x + X_OFFSET + 1, y + X_OFFSET, color);
+  tft.drawLine(x - X_OFFSET + 1, y - X_OFFSET - 1, x + X_OFFSET + 1, y + X_OFFSET - 1, color);
 
-  tft.drawLine(x - 23 - 1, y + 23 - 1, x + 23 - 1, y - 23 - 1, color);
-  tft.drawLine(x - 23, y + 23 - 1, x + 23, y - 23 - 1, color);
-  tft.drawLine(x - 23, y + 23, x + 23, y - 23, color);
-  tft.drawLine(x - 23, y + 23 + 1, x + 23, y - 23 + 1, color);
-  tft.drawLine(x - 23 + 1, y + 23 + 1, x + 23 + 1, y - 23 + 1, color);
+  // Off diagonal - SE to NW
+  tft.drawLine(x - X_OFFSET - 1, y + X_OFFSET - 1, x + X_OFFSET - 1, y - X_OFFSET - 1, color);
+  tft.drawLine(x - X_OFFSET, y + X_OFFSET - 1, x + X_OFFSET, y - X_OFFSET - 1, color);
+  tft.drawLine(x - X_OFFSET, y + X_OFFSET, x + X_OFFSET, y - X_OFFSET, color);
+  tft.drawLine(x - X_OFFSET, y + X_OFFSET + 1, x + X_OFFSET, y - X_OFFSET + 1, color);
+  tft.drawLine(x - X_OFFSET + 1, y + X_OFFSET + 1, x + X_OFFSET + 1, y - X_OFFSET + 1, color);
 }
 
 void setup() {
