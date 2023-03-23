@@ -20,12 +20,20 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 #define TS_MAXX 3800
 #define TS_MAXY 4000
 
+// 240x240 centered on 240x320 screen
+#define GRID_START_X 0
+#define GRID_START_Y 40
+#define GRID_END_X   240
+#define GRID_END_Y   280
+#define GRID_CELL_WIDTH ((GRID_END_X - GRID_START_X) / 3)
+#define GRID_CELL_CENTER_OFFSET (GRID_CELL_WIDTH / 2)
+
 uint16_t gridToPixelX(uint8_t coord) {
-  return 40 + coord * 80;
+  return GRID_CELL_CENTER_OFFSET + coord * GRID_CELL_WIDTH;
 }
 
 uint16_t gridToPixelY(uint8_t coord) {
-  return 240 - coord * 80;
+  return GRID_END_Y - GRID_CELL_CENTER_OFFSET - coord * GRID_CELL_WIDTH;
 }
 
 /* x and y should be numbers between 0 and 2 inclusive.
@@ -75,6 +83,9 @@ void setup() {
     tft.drawLine(0, 200 + i, 240, 200 + i, ILI9341_BLACK);
   }
 
+  drawO(0, 0, ILI9341_BLACK);
+  drawX(2, 1, ILI9341_BLACK);
+
   while (!Serial);
   if (!ts.begin()) {
     Serial.println("Failed to start touchscreen");
@@ -88,10 +99,4 @@ void loop() {
   TS_Point point = ts.getPoint();
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
-
-  Serial.print("(");
-  Serial.print(point.x);
-  Serial.print(", ");
-  Serial.print(point.y);
-  Serial.println(")");
 }
