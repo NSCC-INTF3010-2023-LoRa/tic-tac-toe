@@ -21,6 +21,23 @@ void drawO(uint8_t x, uint8_t y, uint16_t color) {
   }
 }
 
+void drawX(uint8_t x, uint8_t y, uint16_t color) {
+  x = 40 + x * 80;
+  y = 240 - y * 80;
+
+  tft.drawLine(x - 23 - 1, y - 23 + 1, x + 23 - 1, y + 23 + 1, color);
+  tft.drawLine(x - 23, y - 23 + 1, x + 23, y + 23 + 1, color);
+  tft.drawLine(x - 23, y - 23, x + 23, y + 23, color);
+  tft.drawLine(x - 23 + 1, y - 23, x + 23 + 1, y + 23, color);
+  tft.drawLine(x - 23 + 1, y - 23 - 1, x + 23 + 1, y + 23 - 1, color);
+
+  tft.drawLine(x - 23 - 1, y + 23 - 1, x + 23 - 1, y - 23 - 1, color);
+  tft.drawLine(x - 23, y + 23 - 1, x + 23, y - 23 - 1, color);
+  tft.drawLine(x - 23, y + 23, x + 23, y - 23, color);
+  tft.drawLine(x - 23, y + 23 + 1, x + 23, y - 23 + 1, color);
+  tft.drawLine(x - 23 + 1, y + 23 + 1, x + 23 + 1, y - 23 + 1, color);
+}
+
 void setup() {
   tft.begin();
   tft.fillScreen(ILI9341_WHITE);
@@ -38,6 +55,7 @@ void setup() {
   }
 
   drawO(0, 0, ILI9341_BLACK);
+  drawX(2, 0, ILI9341_BLACK);
 }
 
 void loop() {
