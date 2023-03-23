@@ -9,6 +9,18 @@
 // -1 for the reset pin, which we don't use
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, -1, TFT_MISO);
 
+/* x and y should be numbers between 0 and 2 inclusive.
+ * (0, 0) represents the bottom-left corner of the grid */
+void drawO(uint8_t x, uint8_t y, uint16_t color) {
+  // Convert grid coords to pixel coords
+  x = 40 + x * 80;
+  y = 240 - y * 80;
+
+  for (int r = 30; r <= 32; r++) {
+    tft.drawCircle(x, y, r, color);
+  }
+}
+
 void setup() {
   tft.begin();
   tft.fillScreen(ILI9341_WHITE);
@@ -24,6 +36,8 @@ void setup() {
     tft.drawLine(0 + i, 120 + i, 240 + i, 120 + i, ILI9341_BLACK);
     tft.drawLine(0 + i, 200 + i, 240 + i, 200 + i, ILI9341_BLACK);
   }
+
+  drawO(0, 0, ILI9341_BLACK);
 }
 
 void loop() {
