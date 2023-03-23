@@ -28,17 +28,14 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 #define GRID_CELL_WIDTH ((GRID_END_X - GRID_START_X) / 3)
 #define GRID_CELL_CENTER_OFFSET (GRID_CELL_WIDTH / 2)
 
-#define TURN_X 0
-#define TURN_O 1
-uint8_t turn = TURN_X;
-
-#define CELL_UNKNOWN 0
-#define CELL_X 1
-#define CELL_O 2
+#define SIDE_UNKNOWN 0
+#define SIDE_X 1
+#define SIDE_O 2
+uint8_t player = SIDE_X;
 uint8_t grid[3][3] = {
-  {CELL_UNKNOWN, CELL_UNKNOWN, CELL_UNKNOWN},
-  {CELL_UNKNOWN, CELL_UNKNOWN, CELL_UNKNOWN},
-  {CELL_UNKNOWN, CELL_UNKNOWN, CELL_UNKNOWN}
+  {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN},
+  {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN},
+  {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN}
 };
 
 uint16_t gridToPixelX(uint8_t coord) {
@@ -95,21 +92,21 @@ void drawX(uint8_t x, uint8_t y, uint16_t color) {
 
 void triggerVictory(uint8_t side) {
   tft.setCursor(0, 0);
-  tft.write(side == CELL_X ? "X" : "O");
+  tft.write(side == SIDE_X ? "X" : "O");
   tft.write(" wins!");
 }
 
 void processTurn(uint8_t x, uint8_t y) {
-  if (grid[x][y] != CELL_UNKNOWN) return;
+  if (grid[x][y] != SIDE_UNKNOWN) return;
 
-  if (turn == TURN_X) {
-    grid[x][y] = CELL_X;
+  if (player == SIDE_X) {
+    grid[x][y] = SIDE_X;
     drawX(x, y, ILI9341_BLACK);
-    turn = TURN_O;
+    player = SIDE_O;
   } else {
-    grid[x][y] = CELL_O;
+    grid[x][y] = SIDE_O;
     drawO(x, y, ILI9341_BLACK);
-    turn = TURN_X;
+    player = SIDE_X;
   }
 
   // Check for victory
