@@ -2,6 +2,8 @@
 #include <Adafruit_ILI9341.h>
 #include <Adafruit_STMPE610.h>
 
+#include "GameState.h"
+
 #define TFT_CS 4 /* shield pin 10 */
 #define TFT_DC 3 /* shield pin 9  */
 #define SCK    7 /* shield pin 13 */
@@ -11,6 +13,8 @@
 // -1 for the reset pin, which we don't use
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, MOSI, SCK, -1, MISO);
 Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
+
+GameState state;
 
 // Determines the length of lines that draw X's
 #define X_OFFSET 23
@@ -27,18 +31,6 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 #define GRID_END_Y   280
 #define GRID_CELL_WIDTH ((GRID_END_X - GRID_START_X) / 3)
 #define GRID_CELL_CENTER_OFFSET (GRID_CELL_WIDTH / 2)
-
-#define SIDE_UNKNOWN 0
-#define SIDE_X 1
-#define SIDE_O 2
-uint8_t player = SIDE_X;
-uint8_t grid[3][3] = {
-  {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN},
-  {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN},
-  {SIDE_UNKNOWN, SIDE_UNKNOWN, SIDE_UNKNOWN}
-};
-
-uint8_t turn = 1;
 
 uint16_t gridToPixelX(uint8_t coord) {
   return GRID_CELL_CENTER_OFFSET + coord * GRID_CELL_WIDTH;
@@ -104,41 +96,32 @@ void triggerStalemate() {
 }
 
 void processTurn(uint8_t x, uint8_t y) {
-  // Do nothing if the user taps a non-empty square
-  if (grid[x][y] != SIDE_UNKNOWN) return;
-
-  if (player == SIDE_X) {
-    grid[x][y] = SIDE_X;
-    drawX(x, y, ILI9341_BLACK);
-  } else {
-    grid[x][y] = SIDE_O;
-    drawO(x, y, ILI9341_BLACK);
-  }
-
-  // Check for victory
-  if (grid[0][y] == grid[1][y] && grid[1][y] == grid[2][y]) {
-    return triggerVictory(player);
-  }
-  if (grid[x][0] == grid[x][1] && grid[x][1] == grid[x][2]) {
-    return triggerVictory(player);
-  }
-  if (x == y) { // We're on the off diagonal
-    if (grid[0][0] == grid[1][1] && grid[1][1] == grid[2][2]) {
-      return triggerVictory(player);
+  int8_t result = state.processMove(x, y);
+  
+  if (result == RESULT_CONTINUE) {
+    uint8_t lastPlayer = state.lastPlayer();
+    if (lastPlayer == SIDE_X) {
+      drawX(x, y, ILI9341_BLACK);
+    } else {
+      drawO(x, y, ILI9341_BLACK);
     }
-  }
-  if (x + y == 2) { // We're on the main diagonal
-    if (grid[0][2] == grid[1][1] && grid[1][1] == grid[2][0]) {
-      return triggerVictory(player);
+  } else if (result == RESULT_STALEMATE) {
+    uint8_t player = state.currentPlayer();
+    if (player == SIDE_X) {
+      drawX(x, y, ILI9341_BLACK);
+    } else {
+      drawO(x, y, ILI9341_BLACK);
     }
+    triggerStalemate();
+  } else if (result == RESULT_VICTORY) {
+    uint8_t player = state.currentPlayer();
+    if (player == SIDE_X) {
+      drawX(x, y, ILI9341_BLACK);
+    } else {
+      drawO(x, y, ILI9341_BLACK);
+    }
+    triggerVictory(state.currentPlayer());
   }
-
-  if (turn == 9) {
-    return triggerStalemate();
-  }
-
-  player = player == SIDE_X ? SIDE_O : SIDE_X;
-  turn++;
 }
 
 void setup() {
@@ -177,6 +160,5 @@ void loop() {
   uint8_t y = pixelToGridY(point.y);
   if (y == -1) return;
 
-  // drawX(x, y, ILI9341_BLACK);
   processTurn(x, y);
 }
