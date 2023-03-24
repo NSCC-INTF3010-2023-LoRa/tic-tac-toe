@@ -6,14 +6,8 @@
 /* We represent the board as a 2x2 grid, with (0, 0) being the bottom-left cell.
  * Each cell can contain one of three values: SIDE_UNKNOWN, SIDE_X and SIDE_O */
 
-#define SIDE_UNKNOWN 0
-#define SIDE_X 1
-#define SIDE_O 2
-
-#define RESULT_INVALID_MOVE -1
-#define RESULT_CONTINUE 0
-#define RESULT_VICTORY 1
-#define RESULT_STALEMATE 2
+enum Side { UNKNOWN, X, O };
+enum Result { INVALID_MOVE, CONTINUE, VICTORY, STALEMATE };
 
 class GameState {
   public:

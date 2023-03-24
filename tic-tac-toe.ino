@@ -86,7 +86,7 @@ void drawX(uint8_t x, uint8_t y, uint16_t color) {
 
 void triggerVictory(uint8_t side) {
   tft.setCursor(0, 0);
-  tft.write(side == SIDE_X ? "X" : "O");
+  tft.write(side == X ? "X" : "O");
   tft.write(" wins!");
 }
 
@@ -98,24 +98,24 @@ void triggerStalemate() {
 void processTurn(uint8_t x, uint8_t y) {
   int8_t result = state.processMove(x, y);
   
-  if (result == RESULT_CONTINUE) {
+  if (result == CONTINUE) {
     uint8_t lastPlayer = state.lastPlayer();
-    if (lastPlayer == SIDE_X) {
+    if (lastPlayer == X) {
       drawX(x, y, ILI9341_BLACK);
     } else {
       drawO(x, y, ILI9341_BLACK);
     }
-  } else if (result == RESULT_STALEMATE) {
+  } else if (result == STALEMATE) {
     uint8_t player = state.currentPlayer();
-    if (player == SIDE_X) {
+    if (player == X) {
       drawX(x, y, ILI9341_BLACK);
     } else {
       drawO(x, y, ILI9341_BLACK);
     }
     triggerStalemate();
-  } else if (result == RESULT_VICTORY) {
+  } else if (result == VICTORY) {
     uint8_t player = state.currentPlayer();
-    if (player == SIDE_X) {
+    if (player == X) {
       drawX(x, y, ILI9341_BLACK);
     } else {
       drawO(x, y, ILI9341_BLACK);
