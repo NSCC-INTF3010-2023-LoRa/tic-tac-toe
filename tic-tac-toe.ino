@@ -59,9 +59,11 @@ void loop() {
     uint8_t player = state.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
     ui.showMessage("Stalemate");
+    ui.showPlayAgainDialog();
   } else if (result == VICTORY) {
     uint8_t player = state.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
     ui.showMessage(player == X ? "X wins!" : "O wins!");
+    ui.showPlayAgainDialog();
   }
 }

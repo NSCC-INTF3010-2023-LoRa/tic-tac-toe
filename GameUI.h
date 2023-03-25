@@ -28,6 +28,7 @@ class GameUI {
     uint8_t pixelToGridY(uint16_t coord);
     void draw(uint8_t x, uint8_t y, int symbol);
     void showMessage(std::string message);
+    void showPlayAgainDialog();
 
   private:
     Adafruit_ILI9341 *tft;

@@ -87,6 +87,42 @@ void GameUI::showMessage(std::string message) {
   uint16_t x = (tft->width() - width) / 2 - 5;
   uint16_t y = GRID_START_Y / 2 - 7;
 
+  tft->setTextColor(ILI9341_BLUE, ILI9341_WHITE);
   tft->setCursor(x, y);
   tft->write(message.c_str());
+}
+
+void GameUI::showPlayAgainDialog() {
+  // Whole dialog
+  unsigned int horizontalPadding = 40;
+  unsigned int boxWidth = tft->width() - 2 * horizontalPadding;
+  unsigned int boxHeight = 100;
+  unsigned int boxTop = (tft->height() - boxHeight) / 2;
+  unsigned int boxLeft = horizontalPadding + 1;
+  unsigned int boxBottom = boxTop + boxHeight;
+  tft->fillRect(boxLeft, boxTop, boxWidth, boxHeight, ILI9341_WHITE);
+  tft->drawRect(boxLeft, boxTop, boxWidth, boxHeight, ILI9341_BLACK);
+
+  // Title bar
+  unsigned int titleBoxBottom = boxTop + 19; // 16 for font + 2 for padding + 1 for top border = 19
+  tft->drawLine(boxLeft, titleBoxBottom, tft->width() - horizontalPadding - 1, boxTop + 16 + 3, ILI9341_BLACK);
+  tft->setCursor(boxLeft + 2, boxTop + 2);
+  tft->write("Play again?");
+
+  // Buttons
+  unsigned int borderX = tft->width() / 2;
+  unsigned int buttonTop = titleBoxBottom + 1;
+  unsigned int buttonBottom = boxBottom - 1;
+  unsigned int buttonHeight = buttonBottom - buttonTop;
+  // No is one pixel wider because the border is just left of center
+  unsigned int yesWidth = boxWidth / 2 - 2;
+  unsigned int noWidth = boxWidth / 2 - 1;
+  tft->drawLine(borderX, titleBoxBottom, tft->width() / 2, boxTop + boxHeight - 1, ILI9341_BLACK);
+  tft->fillRect(boxLeft + 1, buttonTop, yesWidth, buttonHeight, tft->color565(64, 255, 64));
+  tft->fillRect(borderX + 1, buttonTop, noWidth, buttonHeight, tft->color565(255, 64, 64));
+  tft->setTextColor(ILI9341_BLACK);
+  tft->setCursor(boxLeft + 1 + yesWidth / 2 - 15, buttonTop + buttonHeight / 2 - 8);
+  tft->write("Yes");
+  tft->setCursor(borderX + 1 + noWidth / 2 - 10, buttonTop + buttonHeight / 2 - 8);
+  tft->write("No");
 }
