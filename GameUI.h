@@ -18,18 +18,21 @@
 #define GRID_CELL_WIDTH ((GRID_END_X - GRID_START_X) / 3)
 #define GRID_CELL_CENTER_OFFSET (GRID_CELL_WIDTH / 2)
 
+enum Symbol {SYMBOL_X, SYMBOL_O};
+
 class GameUI {
   public:
     GameUI(Adafruit_ILI9341 *tft);
     uint8_t pixelToGridX(uint16_t coord);
     uint8_t pixelToGridY(uint16_t coord);
-    void drawO(uint8_t x, uint8_t y, uint16_t color);
-    void drawX(uint8_t x, uint8_t y, uint16_t color);
+    void draw(uint8_t x, uint8_t y, int symbol);
     void showVictory(const char *sideName);
     void showStalemate();
 
   private:
     Adafruit_ILI9341 *tft;
+    void drawO(uint8_t x, uint8_t y, uint16_t color);
+    void drawX(uint8_t x, uint8_t y, uint16_t color);
     uint16_t gridToPixelX(uint8_t coord);
     uint16_t gridToPixelY(uint8_t coord);
 };

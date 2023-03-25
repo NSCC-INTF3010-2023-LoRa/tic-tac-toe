@@ -41,6 +41,12 @@ uint8_t GameUI::pixelToGridY(uint16_t coord) {
   return 2 - (coord - GRID_START_Y) / GRID_CELL_WIDTH;
 }
 
+void GameUI::draw(uint8_t x, uint8_t y, int symbol) {
+  if (symbol == SYMBOL_X)      drawX(x, y, ILI9341_BLACK);
+  else if (symbol == SYMBOL_O) drawO(x, y, ILI9341_BLACK);
+  else Serial.println("ERROR: GameUI::draw(): attempt to draw symbol other than X or O");
+}
+
 /* x and y should be numbers between 0 and 2 inclusive.
  * (0, 0) represents the bottom-left corner of the grid */
 void GameUI::drawO(uint8_t x, uint8_t y, uint16_t color) {

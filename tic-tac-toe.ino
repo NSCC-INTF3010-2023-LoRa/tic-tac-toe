@@ -5,6 +5,8 @@
 #include "GameState.h"
 #include "GameUI.h"
 
+/* The touchscreen reports values in this range for tap coords. We use this to
+ * calculate the pixel that was clicked. */
 #define TS_MINX 150
 #define TS_MINY 130
 #define TS_MAXX 3800
@@ -22,35 +24,6 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 
 GameState state;
 GameUI ui(&tft);
-
-void processTurn(uint8_t x, uint8_t y) {
-  int8_t result = state.processMove(x, y);
-  
-  if (result == CONTINUE) {
-    uint8_t lastPlayer = state.lastPlayer();
-    if (lastPlayer == X) {
-      ui.drawX(x, y, ILI9341_BLACK);
-    } else {
-      ui.drawO(x, y, ILI9341_BLACK);
-    }
-  } else if (result == STALEMATE) {
-    uint8_t player = state.currentPlayer();
-    if (player == X) {
-      ui.drawX(x, y, ILI9341_BLACK);
-    } else {
-      ui.drawO(x, y, ILI9341_BLACK);
-    }
-    ui.showStalemate();
-  } else if (result == VICTORY) {
-    uint8_t player = state.currentPlayer();
-    if (player == X) {
-      ui.drawX(x, y, ILI9341_BLACK);
-    } else {
-      ui.drawO(x, y, ILI9341_BLACK);
-    }
-    ui.showVictory(state.currentPlayer() == X ? "X" : "O");
-  }
-}
 
 void setup() {
   Serial.begin(9600);
@@ -73,5 +46,18 @@ void loop() {
   uint8_t y = ui.pixelToGridY(point.y);
   if (y == -1) return;
 
-  processTurn(x, y);
+   int8_t result = state.processMove(x, y);
+  
+  if (result == CONTINUE) {
+    uint8_t lastPlayer = state.lastPlayer();
+    ui.draw(x, y, lastPlayer == X ? SYMBOL_X : SYMBOL_O);
+  } else if (result == STALEMATE) {
+    uint8_t player = state.currentPlayer();
+    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
+    ui.showStalemate();
+  } else if (result == VICTORY) {
+    uint8_t player = state.currentPlayer();
+    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
+    ui.showVictory(state.currentPlayer() == X ? "X" : "O");
+  }
 }
