@@ -77,18 +77,10 @@ void GameUI::drawX(uint8_t x, uint8_t y, uint16_t color) {
   tft->drawLine(x - X_OFFSET + 1, y + X_OFFSET + 1, x + X_OFFSET + 1, y - X_OFFSET + 1, color);
 }
 
-void GameUI::showVictory(const char *sideName) {
-  tft->setCursor(0, 0);
-  tft->write(sideName);
-  tft->write(" wins!");
-}
-
-void GameUI::showStalemate() {
-  tft->setCursor(0, 0);
-  tft->write("Stalemate");
-}
-
 void GameUI::showMessage(std::string message) {
+  // Clear the previous message
+  tft->fillRect(0, 0, tft->width(), GRID_START_Y - 1, ILI9341_WHITE);
+
   // We center the message in the space above the grid.
   // The font is 10x14 (or rather 5x7 at 2x zoom).
   size_t width = 10 * message.length();

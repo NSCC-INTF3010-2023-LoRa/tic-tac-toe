@@ -27,8 +27,6 @@ class GameUI {
     uint8_t pixelToGridX(uint16_t coord);
     uint8_t pixelToGridY(uint16_t coord);
     void draw(uint8_t x, uint8_t y, int symbol);
-    void showVictory(const char *sideName);
-    void showStalemate();
     void showMessage(std::string message);
 
   private:

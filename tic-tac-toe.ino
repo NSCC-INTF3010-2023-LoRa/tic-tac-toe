@@ -58,10 +58,10 @@ void loop() {
   } else if (result == STALEMATE) {
     uint8_t player = state.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showStalemate();
+    ui.showMessage("Stalemate");
   } else if (result == VICTORY) {
     uint8_t player = state.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showVictory(state.currentPlayer() == X ? "X" : "O");
+    ui.showMessage(player == X ? "X wins!" : "O wins!");
   }
 }
