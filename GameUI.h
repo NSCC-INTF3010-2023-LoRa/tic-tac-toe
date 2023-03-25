@@ -6,6 +6,7 @@
 #include <Adafruit_STMPE610.h>
 
 #include <cstdint>
+#include <string>
 
 // Determines the length of lines that draw X's
 #define X_OFFSET 23
@@ -28,6 +29,7 @@ class GameUI {
     void draw(uint8_t x, uint8_t y, int symbol);
     void showVictory(const char *sideName);
     void showStalemate();
+    void showMessage(std::string message);
 
   private:
     Adafruit_ILI9341 *tft;

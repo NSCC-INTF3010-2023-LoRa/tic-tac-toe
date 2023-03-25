@@ -28,10 +28,13 @@ GameUI ui(&tft);
 void setup() {
   Serial.begin(9600);
   while (!Serial);
+
   if (!ts.begin()) {
     Serial.println("Failed to start touchscreen");
     while (true) delay(1000);
   }
+
+  ui.showMessage("X's turn");
 }
 
 void loop() {
@@ -51,6 +54,7 @@ void loop() {
   if (result == CONTINUE) {
     uint8_t lastPlayer = state.lastPlayer();
     ui.draw(x, y, lastPlayer == X ? SYMBOL_X : SYMBOL_O);
+    ui.showMessage(lastPlayer == X ? "O's turn" : "X's turn");
   } else if (result == STALEMATE) {
     uint8_t player = state.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);

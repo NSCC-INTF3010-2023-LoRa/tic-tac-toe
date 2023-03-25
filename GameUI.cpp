@@ -87,3 +87,14 @@ void GameUI::showStalemate() {
   tft->setCursor(0, 0);
   tft->write("Stalemate");
 }
+
+void GameUI::showMessage(std::string message) {
+  // We center the message in the space above the grid.
+  // The font is 10x14 (or rather 5x7 at 2x zoom).
+  size_t width = 10 * message.length();
+  uint16_t x = (tft->width() - width) / 2 - 5;
+  uint16_t y = GRID_START_Y / 2 - 7;
+
+  tft->setCursor(x, y);
+  tft->write(message.c_str());
+}
