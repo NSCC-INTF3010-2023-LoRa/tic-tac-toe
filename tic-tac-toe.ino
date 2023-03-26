@@ -66,6 +66,7 @@ void setup() {
   randomSeed(analogRead(A0));
   id = random(1, 0xffff);
   ui.showTitleScreen();
+  ui.setTitleScreenMessage("Tap anywhere to play");
 }
 
 void handleTitleScreenTaps() {
@@ -75,6 +76,7 @@ void handleTitleScreenTaps() {
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
+  ui.setTitleScreenMessage("Seeking opponent...");
   appState = SEEKING_OPPONENT;
 }
 
@@ -167,7 +169,7 @@ void handleSeekingOpponent() {
 
         ui.blankScreen();
         ui.drawGrid();
-        ui.showMessage("X's turn");
+        ui.showMessage("Opponent's turn");
         // A tap typically sends multiple points over the wire. We slurp them
         // up here, so that they don't cause handleGameScreenTaps() to draw an
         // X or O prematurely.
@@ -204,6 +206,7 @@ void handleRequestingMatch() {
     Serial.println(" didn't respond");
     timeout = 0;
     opponentId = 0;
+    ui.setTitleScreenMessage("Tap anywhere to play");
     appState = SEEKING_OPPONENT;
   }
 
@@ -228,7 +231,7 @@ void handleRequestingMatch() {
       if (otherId == id) {
         ui.blankScreen();
         ui.drawGrid();
-        ui.showMessage("X's turn");
+        ui.showMessage("Your turn");
         // A tap typically sends multiple points over the wire. We slurp them
         // up here, so that they don't cause handleGameScreenTaps() to draw an
         // X or O prematurely.

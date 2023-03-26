@@ -157,12 +157,16 @@ void GameUI::showTitleScreen() {
   tft->setTextSize(3);
   tft->setTextColor(ILI9341_BLUE);
   tft->write("Tic Tac Toe");
+}
 
-  textWidth = 20 * 12;
+void GameUI::setTitleScreenMessage(std::string message) {
+  tft->fillRect(0, 160, tft->width(), 16, ILI9341_WHITE);
+
+  unsigned int textWidth = message.length() * 12;
   tft->setCursor((tft->width() - textWidth) / 2, 160);
   tft->setTextSize(2);
   tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
-  tft->write("Tap anywhere to play");
+  tft->write(message.c_str());
 }
 
 void GameUI::blankScreen() {

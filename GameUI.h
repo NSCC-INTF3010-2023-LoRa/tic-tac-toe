@@ -30,6 +30,7 @@ class GameUI {
     void showMessage(std::string message);
     void showPlayAgainDialog();
     void showTitleScreen();
+    void setTitleScreenMessage(std::string message);
     void blankScreen();
     void drawGrid();
     bool areCoordsInYesButton(uint16_t x, uint16_t y);
