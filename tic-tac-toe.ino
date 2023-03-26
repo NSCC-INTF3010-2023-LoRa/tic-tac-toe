@@ -32,14 +32,21 @@ enum AppState {
   TITLE_SCREEN,
   GAME_IN_PROGRESS,
   PLAY_AGAIN_DIALOG,
-  SEEKING_OPPONENT
+  SEEKING_OPPONENT,
+  REQUESTING_MATCH
 };
 AppState appState = TITLE_SCREEN;
 
 uint16_t id;
+uint16_t opponentId = 0;
 unsigned long lastSendTime = millis();
+unsigned long timeout = 0;
 
-enum LoRaInstructions {LI_INVALID = 0, LI_SEEKING_OPPONENT};
+enum LoRaInstructions {
+  LI_INVALID = 0,
+  LI_SEEKING_OPPONENT,
+  LI_REQUESTING_MATCH
+};
 
 void setup() {
   Serial.begin(9600);
@@ -56,7 +63,7 @@ void setup() {
   }
 
   randomSeed(analogRead(A0));
-  id = random(0xffff);
+  id = random(1, 0xffff);
   ui.showTitleScreen();
 }
 
@@ -147,14 +154,17 @@ void handleSeekingOpponent() {
     uint8_t instruction = LoRa.read();
 
     if (instruction == LI_SEEKING_OPPONENT) {
-      Serial.print(senderId);
-      Serial.println(" is seeking an opponent");
+      Serial.print("Requesting a match with ");
+      Serial.println(senderId);
+      opponentId = senderId;
+      appState = REQUESTING_MATCH;
     } else {
       Serial.print(senderId);
       Serial.println(" sent an invalid instruction");
     }
   }
 
+  // FIXME: randomize interval
   if (millis() - lastSendTime >= 1000) {
     LoRa.beginPacket();
     LoRa.write(id >> 8);
@@ -165,6 +175,18 @@ void handleSeekingOpponent() {
     Serial.print("Sought opponent as ");
     Serial.println(id);
     lastSendTime = millis();
+  }
+}
+
+void handleRequestingMatch() {
+  if (!timeout) timeout = millis() + 5000;
+
+  if (millis() >= timeout) {
+    Serial.print(opponentId);
+    Serial.println(" didn't respond");
+    timeout = 0;
+    opponentId = 0;
+    appState = SEEKING_OPPONENT;
   }
 }
 
@@ -181,6 +203,9 @@ void loop() {
       break;
     case SEEKING_OPPONENT:
       handleSeekingOpponent();
+      break;
+    case REQUESTING_MATCH:
+      handleRequestingMatch();
       break;
   }
 }
