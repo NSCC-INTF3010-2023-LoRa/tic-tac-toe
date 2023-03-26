@@ -39,6 +39,8 @@ AppState appState = TITLE_SCREEN;
 uint16_t id;
 unsigned long lastSendTime = millis();
 
+enum LoRaInstructions {LI_INVALID = 0, LI_SEEKING_OPPONENT};
+
 void setup() {
   Serial.begin(9600);
   while (!Serial);
@@ -141,18 +143,26 @@ void handlePlayAgainTaps() {
 
 void handleSeekingOpponent() {
   if (LoRa.parsePacket()) {
-    uint16_t num = (LoRa.read() << 8) | LoRa.read();
-    Serial.print("Received ");
-    Serial.println(num);
+    uint16_t senderId = (LoRa.read() << 8) | LoRa.read();
+    uint8_t instruction = LoRa.read();
+
+    if (instruction == LI_SEEKING_OPPONENT) {
+      Serial.print(senderId);
+      Serial.println(" is seeking an opponent");
+    } else {
+      Serial.print(senderId);
+      Serial.println(" sent an invalid instruction");
+    }
   }
 
   if (millis() - lastSendTime >= 1000) {
     LoRa.beginPacket();
     LoRa.write(id >> 8);
     LoRa.write(id & 0xff);
+    LoRa.write(LI_SEEKING_OPPONENT);
     LoRa.endPacket();
 
-    Serial.print("Sent ");
+    Serial.print("Sought opponent as ");
     Serial.println(id);
     lastSendTime = millis();
   }
