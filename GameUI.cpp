@@ -118,12 +118,44 @@ void GameUI::showPlayAgainDialog() {
   tft->write("No");
 }
 
+// FIXME: Do this and NoButton properly.
+bool GameUI::areCoordsInYesButton(uint16_t x, uint16_t y) {
+  // unsigned int horizontalPadding = 40;
+  // unsigned int boxLeft = horizontalPadding + 1;
+  // unsigned int boxWidth = tft->width() - 2 * horizontalPadding;
+  // unsigned int boxHeight = 100;
+  // unsigned int boxTop = (tft->height() - boxHeight) / 2;
+  // unsigned int boxBottom = boxTop + boxHeight;
+  // unsigned int titleBoxBottom = boxTop + 19; // 16 for font + 2 for padding + 1 for top border = 19
+  // unsigned int borderX = tft->width() / 2;
+
+  // return x > boxLeft && x < borderX && y > titleBoxBottom && y < boxBottom;
+
+  return x > 41 && x < 120 && y > 129 && y < 129 + 79;
+}
+
+bool GameUI::areCoordsInNoButton(uint16_t x, uint16_t y) {
+  // unsigned int horizontalPadding = 40;
+  // unsigned int boxLeft = horizontalPadding + 1;
+  // unsigned int boxWidth = tft->width() - 2 * horizontalPadding;
+  // unsigned int boxHeight = 100;
+  // unsigned int boxTop = (tft->height() - boxHeight) / 2;
+  // unsigned int boxBottom = boxTop + boxHeight;
+  // unsigned int titleBoxBottom = boxTop + 19; // 16 for font + 2 for padding + 1 for top border = 19
+  // unsigned int borderX = tft->width() / 2;
+
+  // return x > borderX && x < tft->width() - horizontalPadding && y > titleBoxBottom && y < boxBottom;
+
+  return x > 120 && x < 199 && y > 129 && y < 129 + 79;
+}
+
 void GameUI::showTitleScreen() {
   tft->fillScreen(ILI9341_WHITE);
 
   unsigned int textWidth = 11 * 18;
   tft->setCursor((tft->width() - textWidth) / 2, 20);
   tft->setTextSize(3);
+  tft->setTextColor(ILI9341_BLUE);
   tft->write("Tic Tac Toe");
 
   textWidth = 20 * 12;

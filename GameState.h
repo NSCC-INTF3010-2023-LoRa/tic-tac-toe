@@ -15,12 +15,12 @@ class GameState {
     int8_t processMove(uint8_t x, uint8_t y);
     uint8_t lastPlayer();
     uint8_t currentPlayer();
+    void begin();
   
   private:
     uint8_t player;
     uint8_t grid[3][3];
     uint8_t turn;
-    void begin();
     uint8_t getWinner();
     bool isStalemate();
 };

@@ -37,7 +37,6 @@ void setup() {
     while (true) delay(1000);
   }
 
-  // ui.showMessage("X's turn");
   ui.showTitleScreen();
 }
 
@@ -49,6 +48,7 @@ void handleTitleScreenTaps(TS_Point point) {
   // up here, so that they don't cause handleGameScreenTaps() to draw an
   // X or O prematurely.
   while (!ts.bufferEmpty()) ts.getPoint();
+  gameState.begin();
   appState = GAME_IN_PROGRESS;
 }
 
@@ -58,7 +58,7 @@ void handleGameScreenTaps(TS_Point point) {
   uint8_t y = ui.pixelToGridY(point.y);
   if (y == -1) return;
 
-   int8_t result = gameState.processMove(x, y);
+  int8_t result = gameState.processMove(x, y);
   
   if (result == CONTINUE) {
     uint8_t lastPlayer = gameState.lastPlayer();
@@ -67,13 +67,36 @@ void handleGameScreenTaps(TS_Point point) {
   } else if (result == STALEMATE) {
     uint8_t player = gameState.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage("Stalemate");
+    ui.showMessage("  Stalemate");
     ui.showPlayAgainDialog();
+    appState = PLAY_AGAIN_DIALOG;
   } else if (result == VICTORY) {
     uint8_t player = gameState.currentPlayer();
     ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
     ui.showMessage(player == X ? "X wins!" : "O wins!");
     ui.showPlayAgainDialog();
+    appState = PLAY_AGAIN_DIALOG;
+  }
+}
+
+void handlePlayAgainTaps(TS_Point point) {
+  if (ui.areCoordsInYesButton(point.x, point.y)) {
+    ui.blankScreen();
+    ui.drawGrid();
+    ui.showMessage("X's turn");
+    // A tap typically sends multiple points over the wire. We slurp them
+    // up here, so that they don't cause handleGameScreenTaps() to draw an
+    // X or O prematurely.
+    while (!ts.bufferEmpty()) ts.getPoint();
+    gameState.begin();
+    appState = GAME_IN_PROGRESS;
+  } else if (ui.areCoordsInNoButton(point.x, point.y)) {
+    ui.showTitleScreen();
+    // A tap typically sends multiple points over the wire. We slurp them
+    // up here, so that they don't cause handleTitleScreenTaps() to draw an
+    // X or O prematurely.
+    while (!ts.bufferEmpty()) ts.getPoint();
+    appState = TITLE_SCREEN;
   }
 }
 
@@ -90,6 +113,9 @@ void loop() {
       break;
     case GAME_IN_PROGRESS:
       handleGameScreenTaps(point);
+      break;
+    case PLAY_AGAIN_DIALOG:
+      handlePlayAgainTaps(point);
       break;
   }
 }

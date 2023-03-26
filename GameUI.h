@@ -32,6 +32,8 @@ class GameUI {
     void showTitleScreen();
     void blankScreen();
     void drawGrid();
+    bool areCoordsInYesButton(uint16_t x, uint16_t y);
+    bool areCoordsInNoButton(uint16_t x, uint16_t y);
 
   private:
     Adafruit_ILI9341 *tft;
