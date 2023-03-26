@@ -1,9 +1,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include <Adafruit_STMPE610.h>
+#include <LoRa.h>
 
 #include "GameState.h"
 #include "GameUI.h"
+
+#define FREQ 915E6
 
 /* The touchscreen reports values in this range for tap coords. We use this to
  * calculate the pixel that was clicked. */
@@ -25,8 +28,16 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 GameState gameState;
 GameUI ui(&tft);
 
-enum AppState { TITLE_SCREEN, GAME_IN_PROGRESS, PLAY_AGAIN_DIALOG };
+enum AppState {
+  TITLE_SCREEN,
+  GAME_IN_PROGRESS,
+  PLAY_AGAIN_DIALOG,
+  SEEKING_OPPONENT
+};
 AppState appState = TITLE_SCREEN;
+
+uint16_t id;
+unsigned long lastSendTime = millis();
 
 void setup() {
   Serial.begin(9600);
@@ -37,10 +48,22 @@ void setup() {
     while (true) delay(1000);
   }
 
+  if (!LoRa.begin(FREQ)) {
+    Serial.println("LoRa failed");
+    while (true) delay(1000);
+  }
+
+  randomSeed(analogRead(A0));
+  id = random(0xffff);
   ui.showTitleScreen();
 }
 
 void handleTitleScreenTaps(TS_Point point) {
+  // appState = SEEKING_OPPONENT;
+  // randomSeed(analogRead(A0));
+  // id = random(0xffff);
+  // return;
+
   ui.blankScreen();
   ui.drawGrid();
   ui.showMessage("X's turn");
@@ -101,6 +124,23 @@ void handlePlayAgainTaps(TS_Point point) {
 }
 
 void loop() {
+  if (LoRa.parsePacket()) {
+    uint16_t num = (LoRa.read() << 8) | LoRa.read();
+    Serial.print("Received ");
+    Serial.println(num);
+  }
+
+  if (millis() - lastSendTime >= 1000) {
+    LoRa.beginPacket();
+    LoRa.write(id >> 8);
+    LoRa.write(id & 0xff);
+    LoRa.endPacket();
+
+    Serial.print("Sent ");
+    Serial.println(id);
+    lastSendTime = millis();
+  }
+
   if (ts.bufferEmpty()) return;
 
   TS_Point point = ts.getPoint();
