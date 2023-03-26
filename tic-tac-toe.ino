@@ -158,6 +158,17 @@ void handleSeekingOpponent() {
       Serial.println(senderId);
       opponentId = senderId;
       appState = REQUESTING_MATCH;
+    } else if (instruction == LI_REQUESTING_MATCH) {
+      uint16_t otherId = (LoRa.read() << 8) | LoRa.read();
+
+      if (otherId == id) {
+        Serial.print(senderId);
+        Serial.println(" requested a match with me!");
+      } else {
+        Serial.print(senderId);
+        Serial.print(" requested a match with ");
+        Serial.println(otherId);
+      }
     } else {
       Serial.print(senderId);
       Serial.println(" sent an invalid instruction");
@@ -187,6 +198,17 @@ void handleRequestingMatch() {
     timeout = 0;
     opponentId = 0;
     appState = SEEKING_OPPONENT;
+  }
+
+  if (millis() - lastSendTime >= 1000) {
+    LoRa.beginPacket();
+    LoRa.write(id >> 8);
+    LoRa.write(id & 0xff);
+    LoRa.write(LI_REQUESTING_MATCH);
+    LoRa.write(opponentId >> 8);
+    LoRa.write(opponentId & 0xff);
+    LoRa.endPacket();
+    lastSendTime = millis();
   }
 }
 
