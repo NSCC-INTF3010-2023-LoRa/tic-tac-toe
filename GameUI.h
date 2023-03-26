@@ -29,6 +29,9 @@ class GameUI {
     void draw(uint8_t x, uint8_t y, int symbol);
     void showMessage(std::string message);
     void showPlayAgainDialog();
+    void showTitleScreen();
+    void blankScreen();
+    void drawGrid();
 
   private:
     Adafruit_ILI9341 *tft;

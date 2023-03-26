@@ -22,8 +22,11 @@
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, MOSI, SCK, -1, MISO);
 Adafruit_STMPE610 ts = Adafruit_STMPE610(TS_CS, MOSI, MISO, SCK);
 
-GameState state;
+GameState gameState;
 GameUI ui(&tft);
+
+enum AppState { TITLE_SCREEN, GAME_IN_PROGRESS, PLAY_AGAIN_DIALOG };
+AppState appState = TITLE_SCREEN;
 
 void setup() {
   Serial.begin(9600);
@@ -34,7 +37,44 @@ void setup() {
     while (true) delay(1000);
   }
 
+  // ui.showMessage("X's turn");
+  ui.showTitleScreen();
+}
+
+void handleTitleScreenTaps(TS_Point point) {
+  ui.blankScreen();
+  ui.drawGrid();
   ui.showMessage("X's turn");
+  // A tap typically sends multiple points over the wire. We slurp them
+  // up here, so that they don't cause handleGameScreenTaps() to draw an
+  // X or O prematurely.
+  while (!ts.bufferEmpty()) ts.getPoint();
+  appState = GAME_IN_PROGRESS;
+}
+
+void handleGameScreenTaps(TS_Point point) {
+  uint8_t x = ui.pixelToGridX(point.x);
+  if (x == -1) return;
+  uint8_t y = ui.pixelToGridY(point.y);
+  if (y == -1) return;
+
+   int8_t result = gameState.processMove(x, y);
+  
+  if (result == CONTINUE) {
+    uint8_t lastPlayer = gameState.lastPlayer();
+    ui.draw(x, y, lastPlayer == X ? SYMBOL_X : SYMBOL_O);
+    ui.showMessage(lastPlayer == X ? "O's turn" : "X's turn");
+  } else if (result == STALEMATE) {
+    uint8_t player = gameState.currentPlayer();
+    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
+    ui.showMessage("Stalemate");
+    ui.showPlayAgainDialog();
+  } else if (result == VICTORY) {
+    uint8_t player = gameState.currentPlayer();
+    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
+    ui.showMessage(player == X ? "X wins!" : "O wins!");
+    ui.showPlayAgainDialog();
+  }
 }
 
 void loop() {
@@ -44,26 +84,12 @@ void loop() {
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
-  uint8_t x = ui.pixelToGridX(point.x);
-  if (x == -1) return;
-  uint8_t y = ui.pixelToGridY(point.y);
-  if (y == -1) return;
-
-   int8_t result = state.processMove(x, y);
-  
-  if (result == CONTINUE) {
-    uint8_t lastPlayer = state.lastPlayer();
-    ui.draw(x, y, lastPlayer == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage(lastPlayer == X ? "O's turn" : "X's turn");
-  } else if (result == STALEMATE) {
-    uint8_t player = state.currentPlayer();
-    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage("Stalemate");
-    ui.showPlayAgainDialog();
-  } else if (result == VICTORY) {
-    uint8_t player = state.currentPlayer();
-    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage(player == X ? "X wins!" : "O wins!");
-    ui.showPlayAgainDialog();
+  switch (appState) {
+    case TITLE_SCREEN:
+      handleTitleScreenTaps(point);
+      break;
+    case GAME_IN_PROGRESS:
+      handleGameScreenTaps(point);
+      break;
   }
 }

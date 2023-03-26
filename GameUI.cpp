@@ -8,15 +8,6 @@ GameUI::GameUI(Adafruit_ILI9341 *tft) {
   tft->setTextColor(ILI9341_BLUE, ILI9341_WHITE);
   tft->setTextSize(2);
   tft->setTextWrap(false);
-
-  // Display the tic-tac-toe grid. We draw multiple lines to
-  // display thicker lines
-  for (int i = -1; i <= 1; i++) {
-    tft->drawLine(80 + i, 40, 80 + i, 280, ILI9341_BLACK);
-    tft->drawLine(160 + i, 40, 160 + i, 280, ILI9341_BLACK);
-    tft->drawLine(0, 120 + i, 240, 120 + i, ILI9341_BLACK);
-    tft->drawLine(0, 200 + i, 240, 200 + i, ILI9341_BLACK);
-  }
 }
 
 uint16_t GameUI::gridToPixelX(uint8_t coord) {
@@ -125,4 +116,33 @@ void GameUI::showPlayAgainDialog() {
   tft->write("Yes");
   tft->setCursor(borderX + 1 + noWidth / 2 - 10, buttonTop + buttonHeight / 2 - 8);
   tft->write("No");
+}
+
+void GameUI::showTitleScreen() {
+  tft->fillScreen(ILI9341_WHITE);
+
+  unsigned int textWidth = 11 * 18;
+  tft->setCursor((tft->width() - textWidth) / 2, 20);
+  tft->setTextSize(3);
+  tft->write("Tic Tac Toe");
+
+  textWidth = 20 * 12;
+  tft->setCursor((tft->width() - textWidth) / 2, 160);
+  tft->setTextSize(2);
+  tft->setTextColor(ILI9341_BLACK, ILI9341_WHITE);
+  tft->write("Tap anywhere to play");
+}
+
+void GameUI::blankScreen() {
+  tft->fillScreen(ILI9341_WHITE);
+}
+
+void GameUI::drawGrid() {
+  // We draw multiple lines to display thicker lines
+  for (int i = -1; i <= 1; i++) {
+    tft->drawLine(80 + i, 40, 80 + i, 280, ILI9341_BLACK);
+    tft->drawLine(160 + i, 40, 160 + i, 280, ILI9341_BLACK);
+    tft->drawLine(0, 120 + i, 240, 120 + i, ILI9341_BLACK);
+    tft->drawLine(0, 200 + i, 240, 200 + i, ILI9341_BLACK);
+  }
 }
