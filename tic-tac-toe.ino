@@ -58,11 +58,15 @@ void setup() {
   ui.showTitleScreen();
 }
 
-void handleTitleScreenTaps(TS_Point point) {
-  // appState = SEEKING_OPPONENT;
-  // randomSeed(analogRead(A0));
-  // id = random(0xffff);
-  // return;
+void handleTitleScreenTaps() {
+  if (ts.bufferEmpty()) return;
+
+  TS_Point point = ts.getPoint();
+  point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
+  point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
+
+  appState = SEEKING_OPPONENT;
+  return;
 
   ui.blankScreen();
   ui.drawGrid();
@@ -75,7 +79,13 @@ void handleTitleScreenTaps(TS_Point point) {
   appState = GAME_IN_PROGRESS;
 }
 
-void handleGameScreenTaps(TS_Point point) {
+void handleGameScreenTaps() {
+  if (ts.bufferEmpty()) return;
+
+  TS_Point point = ts.getPoint();
+  point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
+  point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
+
   uint8_t x = ui.pixelToGridX(point.x);
   if (x == -1) return;
   uint8_t y = ui.pixelToGridY(point.y);
@@ -102,7 +112,13 @@ void handleGameScreenTaps(TS_Point point) {
   }
 }
 
-void handlePlayAgainTaps(TS_Point point) {
+void handlePlayAgainTaps() {
+  if (ts.bufferEmpty()) return;
+
+  TS_Point point = ts.getPoint();
+  point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
+  point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
+
   if (ui.areCoordsInYesButton(point.x, point.y)) {
     ui.blankScreen();
     ui.drawGrid();
@@ -123,7 +139,7 @@ void handlePlayAgainTaps(TS_Point point) {
   }
 }
 
-void loop() {
+void handleSeekingOpponent() {
   if (LoRa.parsePacket()) {
     uint16_t num = (LoRa.read() << 8) | LoRa.read();
     Serial.print("Received ");
@@ -140,22 +156,21 @@ void loop() {
     Serial.println(id);
     lastSendTime = millis();
   }
+}
 
-  if (ts.bufferEmpty()) return;
-
-  TS_Point point = ts.getPoint();
-  point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
-  point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
-
+void loop() {
   switch (appState) {
     case TITLE_SCREEN:
-      handleTitleScreenTaps(point);
+      handleTitleScreenTaps();
       break;
     case GAME_IN_PROGRESS:
-      handleGameScreenTaps(point);
+      handleGameScreenTaps();
       break;
     case PLAY_AGAIN_DIALOG:
-      handlePlayAgainTaps(point);
+      handlePlayAgainTaps();
+      break;
+    case SEEKING_OPPONENT:
+      handleSeekingOpponent();
       break;
   }
 }
