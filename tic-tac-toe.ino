@@ -45,7 +45,8 @@ unsigned long timeout = 0;
 enum LoRaInstructions {
   LI_INVALID = 0,
   LI_SEEKING_OPPONENT,
-  LI_REQUESTING_MATCH
+  LI_MATCH_REQUEST,
+  LI_ACCEPT_MATCH
 };
 
 void setup() {
@@ -75,17 +76,6 @@ void handleTitleScreenTaps() {
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
   appState = SEEKING_OPPONENT;
-  return;
-
-  ui.blankScreen();
-  ui.drawGrid();
-  ui.showMessage("X's turn");
-  // A tap typically sends multiple points over the wire. We slurp them
-  // up here, so that they don't cause handleGameScreenTaps() to draw an
-  // X or O prematurely.
-  while (!ts.bufferEmpty()) ts.getPoint();
-  gameState.begin();
-  appState = GAME_IN_PROGRESS;
 }
 
 void handleGameScreenTaps() {
@@ -158,20 +148,37 @@ void handleSeekingOpponent() {
       Serial.println(senderId);
       opponentId = senderId;
       appState = REQUESTING_MATCH;
-    } else if (instruction == LI_REQUESTING_MATCH) {
+    } else if (instruction == LI_MATCH_REQUEST) {
       uint16_t otherId = (LoRa.read() << 8) | LoRa.read();
 
       if (otherId == id) {
         Serial.print(senderId);
         Serial.println(" requested a match with me!");
+
+        LoRa.beginPacket();
+        LoRa.write(id >> 8);
+        LoRa.write(id & 0xff);
+        LoRa.write(LI_ACCEPT_MATCH);
+        LoRa.write(senderId >> 8);
+        LoRa.write(senderId & 0xff);
+        LoRa.endPacket();
+
+        opponentId = senderId;
+
+        ui.blankScreen();
+        ui.drawGrid();
+        ui.showMessage("X's turn");
+        // A tap typically sends multiple points over the wire. We slurp them
+        // up here, so that they don't cause handleGameScreenTaps() to draw an
+        // X or O prematurely.
+        while (!ts.bufferEmpty()) ts.getPoint();
+        gameState.begin();
+        appState = GAME_IN_PROGRESS;
       } else {
         Serial.print(senderId);
         Serial.print(" requested a match with ");
         Serial.println(otherId);
       }
-    } else {
-      Serial.print(senderId);
-      Serial.println(" sent an invalid instruction");
     }
   }
 
@@ -204,11 +211,41 @@ void handleRequestingMatch() {
     LoRa.beginPacket();
     LoRa.write(id >> 8);
     LoRa.write(id & 0xff);
-    LoRa.write(LI_REQUESTING_MATCH);
+    LoRa.write(LI_MATCH_REQUEST);
     LoRa.write(opponentId >> 8);
     LoRa.write(opponentId & 0xff);
     LoRa.endPacket();
     lastSendTime = millis();
+  }
+
+  if (LoRa.parsePacket()) {
+    uint16_t senderId = (LoRa.read() << 8) | LoRa.read();
+    uint8_t instruction = LoRa.read();
+
+    if (instruction == LI_ACCEPT_MATCH) {
+      uint16_t otherId = (LoRa.read() << 8) | LoRa.read();
+
+      if (otherId == id) {
+        ui.blankScreen();
+        ui.drawGrid();
+        ui.showMessage("X's turn");
+        // A tap typically sends multiple points over the wire. We slurp them
+        // up here, so that they don't cause handleGameScreenTaps() to draw an
+        // X or O prematurely.
+        while (!ts.bufferEmpty()) ts.getPoint();
+        gameState.begin();
+        opponentId = senderId;
+        appState = GAME_IN_PROGRESS;
+
+        Serial.print("Accepted match from ");
+        Serial.println(senderId);
+      } else {
+        Serial.print("Ignoring accept match from ");
+        Serial.print(senderId);
+        Serial.print( " to ");
+        Serial.println(otherId);
+      }
+    }
   }
 }
 
