@@ -43,4 +43,5 @@ packet.
 1. Recipient ID: 16 bits
 1. Coordinates: 8 bits
 
-The coordinates can be constructed with coords = 3x + y, and deconstructed with x = coords / 3, y = coords % 3.
+The coordinates can be constructed with coords = 3x + y, and deconstructed with x = coords / 3, y = coords % 3. (0, 0)
+represents the lower left cell, (2, 0) the lower right, (0, 2) the upper left and (2, 2) the upper right.
