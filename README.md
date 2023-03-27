@@ -25,3 +25,7 @@ MKR pin 7 -> shield pin 13
 MKR pin 8 -> shield pin 8
 
 ![Wiring photo](docs/wiring-photo.jpg)
+
+## Additional reading
+
+* [Protocol specification](docs/protocol.md)
