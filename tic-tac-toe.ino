@@ -38,6 +38,8 @@ enum AppState {
 };
 AppState appState = TITLE_SCREEN;
 
+enum Protocol {PROT_CHAT = 1, PROT_TIC_TAC_TOE = 2};
+
 uint16_t id;
 uint16_t opponentId = 0;
 unsigned long lastSendTime = millis();
@@ -73,9 +75,7 @@ void setup() {
   ui.setTitleScreenMessage("Tap anywhere to play");
 }
 
-void handleTitleScreenTaps() {
-  if (ts.bufferEmpty()) return;
-
+TS_Point getTap() {
   TS_Point point = ts.getPoint();
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
@@ -84,7 +84,12 @@ void handleTitleScreenTaps() {
   // up here, so that they don't cause handleGameScreenTaps() to draw an
   // X or O prematurely.
   while (!ts.bufferEmpty()) ts.getPoint();
+}
 
+void handleTitleScreenTaps() {
+  if (ts.bufferEmpty()) return;
+
+  TS_Point point = getTap();
   ui.setTitleScreenMessage("Seeking opponent...");
   appState = SEEKING_OPPONENT;
 }
@@ -128,6 +133,7 @@ void handleGameScreenTaps() {
     Serial.println(3 * x + y);
 
     LoRa.beginPacket();
+    LoRa.write((uint8_t) PROT_TIC_TAC_TOE);
     LoRa.write(id >> 8);
     LoRa.write(id & 0xff);
     LoRa.write(LI_PLACE_SYMBOL);
@@ -174,6 +180,12 @@ void handleLoRaMoves() {
   if (!LoRa.parsePacket()) return;
 
   Serial.println("Handling a LoRa move");
+
+  uint8_t protocol = LoRa.read();
+  if (protocol != PROT_TIC_TAC_TOE) {
+    while (LoRa.available()) LoRa.read();
+    return;
+  }
 
   uint16_t senderId = (LoRa.read() << 8) | LoRa.read();
   uint8_t instruction = LoRa.read();
@@ -252,6 +264,12 @@ void handlePlayAgainTaps() {
 
 void handleSeekingOpponent() {
   if (LoRa.parsePacket()) {
+    uint8_t protocol = LoRa.read();
+    if (protocol != PROT_TIC_TAC_TOE) {
+      while (LoRa.available()) LoRa.read();
+      return;
+    }
+
     uint16_t senderId = (LoRa.read() << 8) | LoRa.read();
     uint8_t instruction = LoRa.read();
 
@@ -268,6 +286,7 @@ void handleSeekingOpponent() {
         Serial.println(" requested a match with me!");
 
         LoRa.beginPacket();
+        LoRa.write((uint8_t) PROT_TIC_TAC_TOE);
         LoRa.write(id >> 8);
         LoRa.write(id & 0xff);
         LoRa.write(LI_ACCEPT_MATCH);
@@ -298,6 +317,7 @@ void handleSeekingOpponent() {
   // FIXME: randomize interval
   if (millis() - lastSendTime >= 1000) {
     LoRa.beginPacket();
+    LoRa.write((uint8_t) PROT_TIC_TAC_TOE);
     LoRa.write(id >> 8);
     LoRa.write(id & 0xff);
     LoRa.write(LI_SEEKING_OPPONENT);
@@ -323,6 +343,7 @@ void handleRequestingMatch() {
 
   if (millis() - lastSendTime >= 1000) {
     LoRa.beginPacket();
+    LoRa.write((uint8_t) PROT_TIC_TAC_TOE);
     LoRa.write(id >> 8);
     LoRa.write(id & 0xff);
     LoRa.write(LI_MATCH_REQUEST);
@@ -333,6 +354,12 @@ void handleRequestingMatch() {
   }
 
   if (LoRa.parsePacket()) {
+    uint8_t protocol = LoRa.read();
+    if (protocol != PROT_TIC_TAC_TOE) {
+      while (LoRa.available()) LoRa.read();
+      return;
+    }
+
     uint16_t senderId = (LoRa.read() << 8) | LoRa.read();
     uint8_t instruction = LoRa.read();
 

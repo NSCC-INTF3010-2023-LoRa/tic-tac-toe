@@ -14,33 +14,41 @@ There is no communication after that. When the game ends, each device will retur
 
 ## Packet anatomy
 
-Each device has a unique 16 bit ID. Each packet starts with that ID, followed by an 8 bit instruction. If the instruction
-takes any parameters, they'll follow the instruction bits. If any piece of data takes more than one byte, the highest byte
-will be transmitted first. When a device receives a packet with a recipient ID for a different device, it MUST ignore that
-packet.
+Each device has a unique 16 bit ID. Each packet starts with the protocol number (always 2), then its ID, followed by
+an 8 bit instruction. If the instruction takes any parameters, they'll follow the instruction bits. If any piece of
+data takes more than one byte, the highest byte will be transmitted first. When a device receives a packet with a
+recipient ID for a different device, it MUST ignore it.
+
+The protocol number allows us to ignore data from other applications, like chat. It's essentially a port number in
+TCP/IP terminology.
 
 ### SEEKING_OPPONENT (discovery)
 
+1. Protocol: 8 bits: 0000 0010
 1. Sender ID: 16 bits
 1. Instruction: 8 bits: 0000 0001
 
 ### MATCH_REQUEST
 
+1. Protocol: 8 bits: 0000 0010
 1. Sender ID: 16 bits
 1. Instruction: 8 bits: 0000 00010
 1. Recipient ID: 16 bits
 
 ### ACCEPT_MATCH
 
+1. Protocol: 8 bits: 0000 0010
 1. Sender ID: 16 bits
 1. Instruction: 8 bits: 0000 0011
 1. Recipient ID: 16 bits
 
 ### PLACE_SYMBOL
 
+1. Protocol: 8 bits: 0000 0010
 1. Sender ID: 16 bits
 1. Instruction: 8 bits: 0000 0100
 1. Recipient ID: 16 bits
 1. Coordinates: 8 bits
 
-The coordinates can be constructed with coords = 3x + y, and deconstructed with x = coords / 3, y = coords % 3.
+The coordinates can be constructed with coords = 3x + y, and deconstructed with x = coords / 3, y = coords % 3. (0, 0)
+represents the lower left cell, (2, 0) the lower right, (0, 2) the upper left and (2, 2) the upper right.
