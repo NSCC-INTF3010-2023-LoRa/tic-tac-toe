@@ -91,6 +91,17 @@ void handleGameScreenTaps() {
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
+  // A tap typically sends multiple points over the wire. We slurp them
+  // up here, so that they don't cause handleGameScreenTaps() to draw an
+  // X or O prematurely.
+  while (!ts.bufferEmpty()) ts.getPoint();
+
+  Serial.print("Got tap (");
+  Serial.print(point.x);
+  Serial.print(", ");
+  Serial.print(point.y);
+  Serial.println(")");
+
   uint8_t x = ui.pixelToGridX(point.x);
   if (x == -1) return;
   uint8_t y = ui.pixelToGridY(point.y);
@@ -107,7 +118,7 @@ void handleGameScreenTaps() {
     Serial.print(x);
     Serial.print(", ");
     Serial.print(y);
-    Serial.print(")");
+    Serial.println(")");
     Serial.print("  Encoded move: ");
     Serial.println(3 * x + y);
 
@@ -126,11 +137,24 @@ void handleGameScreenTaps() {
     ui.showMessage("Opponent's turn");
     appState = WAITING_FOR_OPPONENT;
   } else if (result == STALEMATE) {
+    // FIXME: This makes absolutely no sense. The TS buffer should be
+    // clear out earlier in this function, and yet here we are with more
+    // points in the buffer.
+    while (!ts.bufferEmpty()) ts.getPoint();
+
     ui.draw(x, y, symbol);
     ui.showMessage("Stalemate");
     ui.showPlayAgainDialog();
     appState = PLAY_AGAIN_DIALOG;
   } else if (result == VICTORY) {
+    Serial.println("  Victory!");
+    Serial.print("  Tap buffer is ");
+    Serial.println(ts.bufferEmpty() ? "empty" : "full");
+    // FIXME: This makes absolutely no sense. The TS buffer should be
+    // clear out earlier in this function, and yet here we are with more
+    // points in the buffer.
+    while (!ts.bufferEmpty()) ts.getPoint();
+
     ui.draw(x, y, symbol);
     ui.showMessage("You win!");
     ui.showPlayAgainDialog();
@@ -203,6 +227,12 @@ void handlePlayAgainTaps() {
   // up here, so that they don't cause handleGameScreenTaps() to draw an
   // X or O prematurely.
   while (!ts.bufferEmpty()) ts.getPoint();
+
+  Serial.print("  Dialog got tap (");
+  Serial.print(point.x);
+  Serial.print(", ");
+  Serial.print(point.y);
+  Serial.println(")");
 
   ui.showTitleScreen();
   if (ui.areCoordsInYesButton(point.x, point.y)) {
