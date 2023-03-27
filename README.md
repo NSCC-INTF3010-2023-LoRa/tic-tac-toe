@@ -19,9 +19,9 @@ Play tic tac toe with another human over LoRa.
 
 MKR pin 3 -> shield pin 9    
 MKR pin 4 -> shield pin 10    
-MKR pin 5 -> shield pin 11
-MKR pin 6 -> shield pin 12
-MKR pin 7 -> shield pin 13
+MKR pin 5 -> shield pin 11    
+MKR pin 6 -> shield pin 12    
+MKR pin 7 -> shield pin 13    
 MKR pin 8 -> shield pin 8
 
 ![Wiring photo](docs/wiring-photo.jpg)
