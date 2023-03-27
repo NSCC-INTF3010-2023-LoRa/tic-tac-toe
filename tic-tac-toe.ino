@@ -30,7 +30,8 @@ GameUI ui(&tft);
 
 enum AppState {
   TITLE_SCREEN,
-  GAME_IN_PROGRESS,
+  WAITING_FOR_USER,
+  WAITING_FOR_OPPONENT,
   PLAY_AGAIN_DIALOG,
   SEEKING_OPPONENT,
   REQUESTING_MATCH
@@ -42,11 +43,14 @@ uint16_t opponentId = 0;
 unsigned long lastSendTime = millis();
 unsigned long timeout = 0;
 
+uint8_t symbol;
+
 enum LoRaInstructions {
   LI_INVALID = 0,
   LI_SEEKING_OPPONENT,
   LI_MATCH_REQUEST,
-  LI_ACCEPT_MATCH
+  LI_ACCEPT_MATCH,
+  LI_PLACE_SYMBOL
 };
 
 void setup() {
@@ -93,23 +97,98 @@ void handleGameScreenTaps() {
   if (y == -1) return;
 
   int8_t result = gameState.processMove(x, y);
+
+  if (result != INVALID_MOVE) {
+    Serial.print("Sending move as ");
+    Serial.println(id);
+    Serial.print("  Recipient: ");
+    Serial.println(opponentId);
+    Serial.print("  (");
+    Serial.print(x);
+    Serial.print(", ");
+    Serial.print(y);
+    Serial.print(")");
+    Serial.print("  Encoded move: ");
+    Serial.println(3 * x + y);
+
+    LoRa.beginPacket();
+    LoRa.write(id >> 8);
+    LoRa.write(id & 0xff);
+    LoRa.write(LI_PLACE_SYMBOL);
+    LoRa.write(opponentId >> 8);
+    LoRa.write(opponentId & 0xff);
+    LoRa.write(x * 3 + y);
+    LoRa.endPacket();
+  }
   
   if (result == CONTINUE) {
-    uint8_t lastPlayer = gameState.lastPlayer();
-    ui.draw(x, y, lastPlayer == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage(lastPlayer == X ? "O's turn" : "X's turn");
+    ui.draw(x, y, symbol);
+    ui.showMessage("Opponent's turn");
+    appState = WAITING_FOR_OPPONENT;
   } else if (result == STALEMATE) {
-    uint8_t player = gameState.currentPlayer();
-    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage("  Stalemate");
+    ui.draw(x, y, symbol);
+    ui.showMessage("Stalemate");
     ui.showPlayAgainDialog();
     appState = PLAY_AGAIN_DIALOG;
   } else if (result == VICTORY) {
-    uint8_t player = gameState.currentPlayer();
-    ui.draw(x, y, player == X ? SYMBOL_X : SYMBOL_O);
-    ui.showMessage(player == X ? "X wins!" : "O wins!");
+    ui.draw(x, y, symbol);
+    ui.showMessage("You win!");
     ui.showPlayAgainDialog();
     appState = PLAY_AGAIN_DIALOG;
+  }
+}
+
+void handleLoRaMoves() {
+  // Ignore taps when it's not the user's turn, otherwise
+  // they'll confuse the game when the turn is complete.
+  while (!ts.bufferEmpty()) ts.getPoint();
+  if (!LoRa.parsePacket()) return;
+
+  Serial.println("Handling a LoRa move");
+
+  uint16_t senderId = (LoRa.read() << 8) | LoRa.read();
+  uint8_t instruction = LoRa.read();
+
+  Serial.print("  Got instruction ");
+  Serial.print(instruction);
+  Serial.print(" from ");
+  Serial.println(senderId);
+
+  if (instruction == LI_PLACE_SYMBOL) {
+    uint16_t recipientId = (LoRa.read() << 8) | LoRa.read();
+    uint8_t move = LoRa.read();
+
+    Serial.print("  Recipient is ");
+    Serial.println(recipientId);
+
+    if (recipientId != id) return;
+
+    uint8_t x = move / 3;
+    uint8_t y = move % 3;
+
+    Serial.print("  (");
+    Serial.print(x);
+    Serial.print(", ");
+    Serial.print(y);
+    Serial.println(")");
+
+    int8_t result = gameState.processMove(x, y);
+    uint8_t otherSymbol = symbol == SYMBOL_X ? SYMBOL_O : SYMBOL_X;
+    if (result == CONTINUE) {
+      ui.draw(x, y, otherSymbol);
+      ui.showMessage("Your turn");
+      appState = WAITING_FOR_USER;
+    } else if (result == STALEMATE) {
+      ui.draw(x, y, otherSymbol);
+      ui.showMessage("Stalemate");
+      ui.showPlayAgainDialog();
+      appState = PLAY_AGAIN_DIALOG;
+    } else if (result == VICTORY) {
+      ui.draw(x, y, otherSymbol);
+      ui.showMessage("You lose!");
+      ui.showPlayAgainDialog();
+      appState = PLAY_AGAIN_DIALOG;
+    }
   }
 }
 
@@ -120,22 +199,18 @@ void handlePlayAgainTaps() {
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
+  // A tap typically sends multiple points over the wire. We slurp them
+  // up here, so that they don't cause handleGameScreenTaps() to draw an
+  // X or O prematurely.
+  while (!ts.bufferEmpty()) ts.getPoint();
+
+  ui.showTitleScreen();
   if (ui.areCoordsInYesButton(point.x, point.y)) {
-    ui.blankScreen();
-    ui.drawGrid();
-    ui.showMessage("X's turn");
-    // A tap typically sends multiple points over the wire. We slurp them
-    // up here, so that they don't cause handleGameScreenTaps() to draw an
-    // X or O prematurely.
-    while (!ts.bufferEmpty()) ts.getPoint();
+    ui.setTitleScreenMessage("Seeking opponent...");
     gameState.begin();
-    appState = GAME_IN_PROGRESS;
+    appState = SEEKING_OPPONENT;
   } else if (ui.areCoordsInNoButton(point.x, point.y)) {
-    ui.showTitleScreen();
-    // A tap typically sends multiple points over the wire. We slurp them
-    // up here, so that they don't cause handleTitleScreenTaps() to draw an
-    // X or O prematurely.
-    while (!ts.bufferEmpty()) ts.getPoint();
+    ui.setTitleScreenMessage("Tap anywhere to play");
     appState = TITLE_SCREEN;
   }
 }
@@ -151,9 +226,9 @@ void handleSeekingOpponent() {
       opponentId = senderId;
       appState = REQUESTING_MATCH;
     } else if (instruction == LI_MATCH_REQUEST) {
-      uint16_t otherId = (LoRa.read() << 8) | LoRa.read();
+      uint16_t recipientId = (LoRa.read() << 8) | LoRa.read();
 
-      if (otherId == id) {
+      if (recipientId == id) {
         Serial.print(senderId);
         Serial.println(" requested a match with me!");
 
@@ -174,12 +249,13 @@ void handleSeekingOpponent() {
         // up here, so that they don't cause handleGameScreenTaps() to draw an
         // X or O prematurely.
         while (!ts.bufferEmpty()) ts.getPoint();
+        symbol = SYMBOL_O;
         gameState.begin();
-        appState = GAME_IN_PROGRESS;
+        appState = WAITING_FOR_OPPONENT;
       } else {
         Serial.print(senderId);
         Serial.print(" requested a match with ");
-        Serial.println(otherId);
+        Serial.println(recipientId);
       }
     }
   }
@@ -226,9 +302,9 @@ void handleRequestingMatch() {
     uint8_t instruction = LoRa.read();
 
     if (instruction == LI_ACCEPT_MATCH) {
-      uint16_t otherId = (LoRa.read() << 8) | LoRa.read();
+      uint16_t recipientId = (LoRa.read() << 8) | LoRa.read();
 
-      if (otherId == id) {
+      if (recipientId == id) {
         ui.blankScreen();
         ui.drawGrid();
         ui.showMessage("Your turn");
@@ -238,7 +314,8 @@ void handleRequestingMatch() {
         while (!ts.bufferEmpty()) ts.getPoint();
         gameState.begin();
         opponentId = senderId;
-        appState = GAME_IN_PROGRESS;
+        symbol = SYMBOL_X;
+        appState = WAITING_FOR_USER;
 
         Serial.print("Accepted match from ");
         Serial.println(senderId);
@@ -246,7 +323,7 @@ void handleRequestingMatch() {
         Serial.print("Ignoring accept match from ");
         Serial.print(senderId);
         Serial.print( " to ");
-        Serial.println(otherId);
+        Serial.println(recipientId);
       }
     }
   }
@@ -257,8 +334,11 @@ void loop() {
     case TITLE_SCREEN:
       handleTitleScreenTaps();
       break;
-    case GAME_IN_PROGRESS:
+    case WAITING_FOR_USER:
       handleGameScreenTaps();
+      break;
+    case WAITING_FOR_OPPONENT:
+      handleLoRaMoves();
       break;
     case PLAY_AGAIN_DIALOG:
       handlePlayAgainTaps();
