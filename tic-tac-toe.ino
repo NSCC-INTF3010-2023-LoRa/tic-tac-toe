@@ -80,6 +80,11 @@ void handleTitleScreenTaps() {
   point.x = map(point.x, TS_MINX, TS_MAXX, 0, tft.width());
   point.y = map(point.y, TS_MINY, TS_MAXY, 0, tft.height());
 
+  // A tap typically sends multiple points over the wire. We slurp them
+  // up here, so that they don't cause handleGameScreenTaps() to draw an
+  // X or O prematurely.
+  while (!ts.bufferEmpty()) ts.getPoint();
+
   ui.setTitleScreenMessage("Seeking opponent...");
   appState = SEEKING_OPPONENT;
 }
