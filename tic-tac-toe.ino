@@ -251,14 +251,19 @@ void handlePlayAgainTaps() {
   Serial.print(point.y);
   Serial.println(")");
 
-  ui.showTitleScreen();
   if (ui.areCoordsInYesButton(point.x, point.y)) {
+    ui.showTitleScreen();
     ui.setTitleScreenMessage("Seeking opponent...");
     gameState.begin();
+    while (!ts.bufferEmpty()) ts.getPoint();
     appState = SEEKING_OPPONENT;
   } else if (ui.areCoordsInNoButton(point.x, point.y)) {
+    Serial.println("  Got a no");
+    ui.showTitleScreen();
     ui.setTitleScreenMessage("Tap anywhere to play");
+    while (!ts.bufferEmpty()) ts.getPoint();
     appState = TITLE_SCREEN;
+  } else {
   }
 }
 
