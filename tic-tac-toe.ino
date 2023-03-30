@@ -57,7 +57,6 @@ enum LoRaInstructions {
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
 
   if (!ts.begin()) {
     Serial.println("Failed to start touchscreen");
